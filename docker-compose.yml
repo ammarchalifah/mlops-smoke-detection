@@ -1,0 +1,214 @@
+version: '3.9'
+
+services:
+
+  ####################################################
+  # Experiment Tracking with MLflow
+  ####################################################
+
+  mlflow_db:
+    restart: always
+    image: mysql/mysql-server:5.7.28
+    container_name: mlflow_db
+    expose:
+      - "3306"
+    networks:
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - mlflow_db_data:/var/lib/mysql
+    profiles: ["mlflow"]
+  
+  mlflow_web_server:
+    restart: always
+    build: ./02_mlflow
+    image: mlflow_web_server
+    container_name: mlflow_web_server
+    ports: 
+      - 5000:5000
+    networks:
+      - backend
+    env_file:
+      - .env
+    command: mlflow server --backend-store-uri mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mlflow_db:3306/${MYSQL_DATABASE} --default-artifact-root s3://ammar-mlops-bucket/ --host 0.0.0.0
+    profiles: ["mlflow"]
+
+  ####################################################
+  # Orchestration Services
+  ####################################################
+
+  prefect_db:
+    image: postgres:14.1-alpine
+    container_name: prefect_db
+    restart: always
+    env_file:
+      - .env
+    expose:
+      - 5432
+    volumes:
+      - prefect_db:/var/lib/postgresql/data 
+    networks:
+      - prefect-network
+    profiles: ["orion"]
+  
+  prefect_minio:
+    image: minio/minio:latest
+    container_name: prefect_minio
+    entrypoint: ["minio", "server", "--address", "0.0.0.0:9000", "--console-address", "0.0.0.0:9001", "/data"]
+    volumes:
+      - prefect_minio_data:/data
+    ports:
+      - 9000:9000
+      - 9001:9001
+    networks:
+      - prefect-network
+    profiles: ["minio"]
+
+  prefect_orion:
+    build: ./03_orchestration
+    container_name: prefect_orion
+    restart: always
+    volumes:
+      - prefect_orion:/root/.prefect
+    entrypoint: ["prefect", "orion", "start"]
+    env_file:
+      - .env
+    ports:
+      - 4200:4200
+    depends_on:
+      - prefect_db
+    networks:
+      - prefect-network
+    profiles: ["orion"]
+
+  prefect_agent:
+    build: ./03_orchestration
+    container_name: prefect_agent
+    restart: always
+    entrypoint: ["prefect", "agent", "start", "-q", "ml_ops"]
+    env_file:
+      - .env
+    profiles: ["agent"]
+    networks:
+      - prefect-network
+      - backend
+
+  prefect_cli:
+    build: ./03_orchestration
+    container_name: prefect_cli
+    entrypoint: "bash"
+    working_dir: "/root/flows"
+    volumes:
+      - "./03_orchestration/flows:/root/flows"
+    env_file:
+      - .env
+    profiles: ["cli"]
+    networks:
+      - prefect-network
+      - backend
+
+  ####################################################
+  # Prediction Service
+  ####################################################
+
+  prediction_service:
+    build: ./04_prediction_service
+    container_name: prediction_service
+    depends_on:
+      - evidently_service
+      - mongodb
+    env_file:
+      - .env
+    ports:
+      - 9696:9696
+    networks:
+      - monitoring-backend
+      - monitoring-frontend
+      - backend
+    profiles: ["monitoring"]
+
+  ####################################################
+  # Monitoring Services
+  ####################################################
+ 
+  evidently_service:
+    build: ./05_monitoring
+    container_name: evidently_service
+    depends_on:
+      - grafana
+    volumes:
+      - ./05_monitoring/datasets:/app/datasets
+      - ./05_monitoring/config.yml:/app/config.yml
+    ports:
+      - 8085:8085
+    networks:
+      - monitoring-backend
+      - monitoring-frontend
+    profiles: ["monitoring"]
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./05_monitoring/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - 9091:9090
+    networks:
+      - monitoring-backend
+    restart: always
+    profiles: ["monitoring"]
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    user: "472"
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - ./05_monitoring/config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./05_monitoring/config/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./05_monitoring/dashboards:/opt/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitoring-backend
+      - monitoring-frontend
+    restart: always
+    profiles: ["monitoring"]
+    
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - 27018:27017
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - monitoring-backend
+      - monitoring-frontend
+    profiles: ["monitoring"]
+
+networks:
+  backend:
+    driver: bridge
+  prefect-network:
+    driver: bridge
+  monitoring-backend:
+    driver: bridge
+  monitoring-frontend:
+    driver: bridge
+
+volumes:
+  mlflow_db_data:
+  prefect_db:
+  prefect_minio_data:
+  prefect_orion:
+  prometheus_data:
+  grafana_data:
+  mongodb_data:

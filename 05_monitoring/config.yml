@@ -1,0 +1,35 @@
+datasets:
+  smoke_detection:
+    column_mapping:
+      numerical_features:
+        - 'UTC'
+        - 'Temperature'
+        - 'Humidity'
+        - 'TVOC'
+        - 'eCO2'
+        - 'Raw H2'
+        - 'Raw Ethanol'
+        - 'Pressure'
+        - 'PM1.0'
+        - 'PM2.5'
+        - 'NC0.5'
+        - 'NC1.0'
+        - 'NC2.5'
+        - 'CNT'
+      target: 'Fire Alarm'
+      prediction: 'prediction'
+      task: 'classification'
+    data_format:
+      header: true
+      separator: ','
+    monitors:
+      - data_drift
+      - classification_performance
+    reference_file: ./datasets/smoke_detection_iot.csv
+service:
+  calculation_period_sec: 2
+  min_reference_size: 10
+  moving_reference: false
+  datasets_path: datasets
+  use_reference: true
+  window_size: 5
