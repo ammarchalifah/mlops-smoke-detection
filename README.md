@@ -6,6 +6,8 @@ This project is created to learn best practices of MLops and submitted as my pro
 # Project Background and Overview
 The goal of this project is to build an end-to-end MLops to train, store, register, deploy, serve, and monitor ML model. The problem that this project aiming to solve is to create a pipeline of smoke detection model (binary classification), using public data shared on Kaggle.
 
+![image](docs/diagram.jpg)
+
 The solution overview:
 - Cloud resource provision using IaC tool (Terraform)
 - ML experiment tracking & model registry using MLflow
