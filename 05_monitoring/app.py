@@ -207,18 +207,18 @@ def configure_service():
     datasets = {}
 
     for dataset_name, dataset_options in config["datasets"].items():
-        reference_file = dataset_options['reference_file']
+        reference_file = dataset_options["reference_file"]
         logging.info(
             f"Load reference data for dataset {dataset_name} from {reference_file}"
         )
-        reference_data = pd.read_csv(reference_file, delimiter=',')
+        reference_data = pd.read_csv(reference_file, delimiter=",")
         # reference_data['Pass/Fail'] = reference_data['Pass/Fail'].apply(str)
         # reference_data = reference_data.drop("Unnamed: 0", axis=1, inplace=False)
         # reference_data = reference_data.drop("Time", axis=1, inplace=False)
         datasets[dataset_name] = LoadedDataset(
             name=dataset_name,
             references=reference_data,
-            monitors=dataset_options['monitors'],
+            monitors=dataset_options["monitors"],
             column_mapping=ColumnMapping(**dataset_options["column_mapping"]),
         )
         logging.info(

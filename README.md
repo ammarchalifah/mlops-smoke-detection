@@ -1,4 +1,6 @@
 # MLops Project: Smoke Detection Model
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 This project is created to learn best practices of MLops and submitted as my project in DataTalksClub's MLops Zoomcamp.
 
 <a> https://github.com/DataTalksClub/mlops-zoomcamp </A>
@@ -90,11 +92,10 @@ To monitor the data, access it on Grafana `http://localhost:3000`
 
 ## Best Practices
 - To run each container as background service, add `-d` flag behind the command to daemonize it. This will keep your terminal clean and keep you uninterrupted.
-- Use CI/CD to replace environment variables on the fly.
-- Use linting and pre-commit.
+- Install pre-commit to automatically format (with black) and do some checks when committing.
 
 ## References
 - Reference for this docker-compose architecture & code (MLflow part): https://towardsdatascience.com/deploy-mlflow-with-docker-compose-8059f16b6039
 - Reference for the prefect docker-compose: https://github.com/rpeden/prefect-docker-compose
 - Reference for the Prefect orchestrator: https://github.com/hakymulla/Diabetes-ML-ps
-- Reference for Monitoring architecture: https://github.com/AntonisCSt/Mlops_project_semicon/blob/main/evidently_service/Dockerfile 
+- Reference for Monitoring architecture: https://github.com/AntonisCSt/Mlops_project_semicon/blob/main/evidently_service/Dockerfile

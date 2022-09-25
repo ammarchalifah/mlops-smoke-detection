@@ -19,13 +19,13 @@ services:
     volumes:
       - mlflow_db_data:/var/lib/mysql
     profiles: ["mlflow"]
-  
+
   mlflow_web_server:
     restart: always
     build: ./02_mlflow
     image: mlflow_web_server
     container_name: mlflow_web_server
-    ports: 
+    ports:
       - 5000:5000
     networks:
       - backend
@@ -47,11 +47,11 @@ services:
     expose:
       - 5432
     volumes:
-      - prefect_db:/var/lib/postgresql/data 
+      - prefect_db:/var/lib/postgresql/data
     networks:
       - prefect-network
     profiles: ["orion"]
-  
+
   prefect_minio:
     image: minio/minio:latest
     container_name: prefect_minio
@@ -131,7 +131,7 @@ services:
   ####################################################
   # Monitoring Services
   ####################################################
- 
+
   evidently_service:
     build: ./05_monitoring
     container_name: evidently_service
@@ -181,7 +181,7 @@ services:
       - monitoring-frontend
     restart: always
     profiles: ["monitoring"]
-    
+
   mongodb:
     image: mongo
     container_name: mongodb
