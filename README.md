@@ -93,6 +93,7 @@ To monitor the data, access it on Grafana `http://localhost:3000`
 ## Best Practices
 - To run each container as background service, add `-d` flag behind the command to daemonize it. This will keep your terminal clean and keep you uninterrupted.
 - Install pre-commit to automatically format (with black) and do some checks when committing.
+- CI test during push to remote with GitHub workflow
 
 ## References
 - Reference for this docker-compose architecture & code (MLflow part): https://towardsdatascience.com/deploy-mlflow-with-docker-compose-8059f16b6039
